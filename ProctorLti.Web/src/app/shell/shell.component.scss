@@ -1,0 +1,88 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+:host-context(body[data-lti-proctor-shell]) {
+  height: 100vh;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #ccc;
+  flex-wrap: wrap;
+}
+
+header h1 {
+  font-size: 1rem;
+  margin: 0;
+  flex: 1 1 auto;
+}
+
+.btn {
+  border: 1px solid #888;
+  background: #f4f4f4;
+  color: inherit;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn.primary {
+  background: #1a5fb4;
+  color: #fff;
+  border-color: #174ea0;
+}
+
+.main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.panel {
+  flex: 1;
+  padding: 20px;
+  color: inherit;
+}
+
+.banner {
+  padding: 12px 14px;
+  border-bottom: 1px solid #c9a227;
+  background: #fff7d6;
+  color: #3b3200;
+}
+
+.meta {
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.shell-pause {
+  display: none;
+  padding: 6px 12px;
+  background: #3b3200;
+  color: #fff7d6;
+  font-size: 0.85rem;
+}
+
+.shell-pause.on {
+  display: block;
+}
+
+.error {
+  padding: 16px;
+  color: #b00020;
+}

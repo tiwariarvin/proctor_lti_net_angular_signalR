@@ -1,0 +1,17 @@
+{
+  "/api": {
+    "target": "https://localhost:7237",
+    "secure": false,
+    "changeOrigin": true
+  },
+  "/lti": {
+    "target": "https://localhost:7237",
+    "secure": false,
+    "changeOrigin": true
+  },
+  "/health": {
+    "target": "https://localhost:7237",
+    "secure": false,
+    "changeOrigin": true
+  }
+}

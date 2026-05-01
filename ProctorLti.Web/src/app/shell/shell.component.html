@@ -1,0 +1,54 @@
+@if (loadError) {
+  <p class="error">{{ loadError }}</p>
+} @else {
+  <input type="hidden" id="lti-test-runner-url" [value]="boot?.testRunnerUrl ?? ''" />
+  <header>
+    <h1>Test session</h1>
+    <button
+      class="btn primary"
+      type="button"
+      id="btn-launch-quiz"
+      title="Open Brightspace quiz in a new browser tab"
+      (click)="openQuiz()"
+      [disabled]="!boot?.testRunnerUrl"
+    >
+      Open quiz
+    </button>
+    <button class="btn" type="button" id="btn-play" title="Focus the quiz tab" (click)="play()">Play</button>
+    <button
+      class="btn"
+      type="button"
+      id="btn-pause"
+      title="Dim / block the quiz tab (extension required)"
+      (click)="pause()"
+    >
+      Pause
+    </button>
+    <button class="btn" type="button" id="btn-stop" title="Close the quiz tab" (click)="stop()">Stop</button>
+    <span class="meta" id="status">{{ status }}</span>
+  </header>
+  <div
+    class="shell-pause"
+    [class.on]="shellPause"
+    id="shell-pause-hint"
+    role="status"
+    aria-live="polite"
+  >
+    Quiz tab interaction is paused (see Brightspace window).
+  </div>
+  @if (!boot?.testRunnerUrl) {
+    <div class="banner" id="no-url">
+      No <code>test_runner_url</code> was provided on this launch. In Brightspace, add a custom parameter
+      <code>test_runner_url</code> on the link/deployment, or set <code>DefaultTestRunnerUrl</code> in the tool
+      server configuration.
+    </div>
+  }
+  <div class="main">
+    <div class="panel" id="hint">
+      Use <strong>Open quiz</strong> to open the Brightspace quiz in a new tab, then <strong>Play</strong> /
+      <strong>Pause</strong> / <strong>Stop</strong> to focus, block, or <strong>close that tab</strong>. Install
+      the <em>D2L LTI quiz tab proctor</em> extension for Pause (overlay) and reliable tab control; without it, Stop
+      uses <code>window.close</code> on the window your browser still associates with this page.
+    </div>
+  </div>
+}
