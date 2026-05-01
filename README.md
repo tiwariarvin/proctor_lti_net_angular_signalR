@@ -47,6 +47,17 @@ Default URLs: **https://localhost:7237** and **http://localhost:5180** (`Propert
 - **`GET /`** — Short HTML with LTI registration hints (login + redirect URLs).
 - After a successful LTI **POST** to `/lti/launch`, the user is redirected to **`/shell?sid=…`**; the shell loads data from **`GET /api/session/{id}`**.
 
+## Proctor room and SignalR
+
+Each launch stores a short-lived session whose JSON includes **`proctorRoomId`**. Everyone launching the **same LTI resource link** (same assignment in Brightspace, same deployment) gets the **same** `proctorRoomId`, so one **proctor** view can list multiple learners.
+
+1. **Learner (test shell)** — After LTI, open **`/shell?sid={id}`**. Read **`proctorRoomId`** from **`GET /api/session/{id}`** if you need to show a link to the proctor. When the learner uses **Open quiz**, the SPA should connect to **`/hubs/proctor`** and invoke **`RegisterStudent(sid)`** (the same `sid` as in the URL). On quiz tab close (or when leaving the page), invoke **`QuizClosed(sid)`** or disconnect.
+2. **Proctor** — Open the SPA at **`{PublicBaseUrl}/proctor?room={proctorRoomId}`** (encode the room id for the query string if it contains special characters). Connect to **`/hubs/proctor`** and invoke **`JoinProctor(proctorRoomId)`**. For each row, **Play / Pause / Stop** calls **`SendControl(sessionId, 'play'|'pause'|'stop')`**, where **`sessionId`** is the learner’s **`sid`** from **`StudentJoined`**. The learner’s app handles incoming **`control`** events (focus tab, overlay, close tab—often with the optional extension).
+
+**Hosted URL:** WebSockets and negotiate requests use the path **`/hubs/proctor`** on the **same origin** as `PublicBaseUrl` when the Angular app is built into `wwwroot`. For **`ng serve`** on port 4200, **`proxy.conf.json`** forwards **`/hubs`** to the API so SignalR works during local UI development.
+
+Details and tables: [ProctorLti.Api/README.md](ProctorLti.Api/README.md#signalr-proctor-hub).
+
 ## Develop UI against the API (optional)
 
 1. Start the API as above.
@@ -57,7 +68,7 @@ Default URLs: **https://localhost:7237** and **http://localhost:5180** (`Propert
    npx ng serve
    ```
 
-3. Open **http://localhost:4200**. The dev server proxies `/api`, `/lti`, and `/health` to the API (see `proxy.conf.json`). Real LTI **POST** flows still use the tool’s public **`PublicBaseUrl`**, not `localhost:4200`.
+3. Open **http://localhost:4200**. The dev server proxies `/api`, `/lti`, `/health`, and **`/hubs`** (WebSockets) to the API (see `ProctorLti.Web/proxy.conf.json`). Real LTI **POST** flows still use the tool’s public **`PublicBaseUrl`**, not `localhost:4200`.
 
 ## Optional browser extension
 
