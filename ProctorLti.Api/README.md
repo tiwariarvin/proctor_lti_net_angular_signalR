@@ -9,10 +9,44 @@ ASP.NET Core **8.0** backend for the D2L/Brightspace LTI 1.3 proctor tool. It im
 | `/health` | GET | Liveness: `{ "ok": true }` |
 | `/lti/login` | GET, POST | OIDC third-party login initiation; redirects to the platform authorization URL |
 | `/lti/launch` | POST | `id_token` + `state` (form post); validates token, stores launch context, **302** to `/shell?sid=…` |
-| `/api/session/{id}` | GET | JSON for the shell: `testRunnerUrl`, `userName`, `deploymentId`, `controlChannel` (camelCase) |
+| `/api/session/{id}` | GET | JSON for the shell: `testRunnerUrl`, `userName`, `deploymentId`, `proctorRoomId`, `controlChannel` (camelCase JSON) |
+| `/hubs/proctor` | SignalR | Real-time **proctor ↔ student** channel (see below) |
 | `/` | GET | Static HTML with tool registration hints (login + redirect URLs) |
 
-When `wwwroot/` contains a built Angular app (`index.html`), static files and `MapFallbackToFile` serve the SPA. `Content-Security-Policy: frame-ancestors` is set for the shell to allow embedding from your LMS issuer.
+When `wwwroot/` contains a built Angular app (`index.html`), static files and `MapFallbackToFile` serve the SPA. `Content-Security-Policy: frame-ancestors` is set for **`/shell`** and **`/proctor`** so those routes can be embedded from your LMS issuer.
+
+### Session JSON (`GET /api/session/{id}`)
+
+| Property | Meaning |
+| --- | --- |
+| `testRunnerUrl` | Brightspace (or other) URL to open in a new tab when the learner uses **Open quiz** |
+| `userName` | Display name from the LTI `id_token` (`name` claim), when present |
+| `deploymentId` | LTI deployment id |
+| `proctorRoomId` | Stable id shared by all launches of the **same** resource link (deployment + resource link id from the token, with fallbacks). Used to join proctors and students in one SignalR room |
+| `controlChannel` | Legacy label for the optional `postMessage` channel name (`d2l-lti-test-runner-control`) |
+
+### SignalR proctor hub
+
+Connect with the **SignalR client** to `{PublicBaseUrl}/hubs/proctor` (same origin as the API after launch).
+
+**Server methods** (invoke from the browser):
+
+| Method | Caller | Purpose |
+| --- | --- | --- |
+| `JoinProctor(roomId)` | Proctor UI | Join the room `roomId` (use **`proctorRoomId`** from the session API). Receives a replay of **`StudentJoined`** for students already present |
+| `RegisterStudent(sessionId)` | Student shell | `sessionId` is the **`sid`** query value from `/shell?sid=…`. Validates the session in memory, joins SignalR groups, notifies the room |
+| `QuizClosed(sessionId)` | Student shell | Call when the learner closes the quiz tab (shell still open). Removes this student from the proctor list |
+| `SendControl(sessionId, command)` | Proctor UI | `command` is `play`, `pause`, or `stop`. Delivered to that student’s connection only |
+
+**Server callbacks** (register with `connection.on`):
+
+| Event | Payload | Direction |
+| --- | --- | --- |
+| `StudentJoined` | `(sessionId: string, displayName: string)` | To everyone in the room when a student registers |
+| `StudentLeft` | `(sessionId: string)` | When the student disconnects, calls `QuizClosed`, or is replaced by a new tab |
+| `control` | `(command: string)` | To the **student** connection: `play`, `pause`, or `stop` |
+
+The hub state is **in-memory** (single process). Scale-out would require a **backplane** (Redis, etc.), not configured here.
 
 ## Configuration
 
